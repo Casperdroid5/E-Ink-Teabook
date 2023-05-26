@@ -1,6 +1,8 @@
 #include "Adafruit_ThinkInk.h"
 #include "Texts.h"
-#include <LowPower.h>
+#include <avr/sleep.h>
+#include <avr/wdt.h>
+#include <avr/power.h>
 
 // Pin definitions
 #define EPD_CS 10
@@ -24,17 +26,16 @@
 ThinkInk_213_Mono_BN display(EPD_DC, EPD_RESET, EPD_CS, SRAM_CS, EPD_BUSY);
 
 // Time interval before new text is displayed
-const unsigned long DISPLAY_INTERVAL = 86400;  // One day: 86400
+const unsigned long DISPLAY_INTERVAL = 30000;  // One day: 86400
 
 const int ENAPin = 4;  // Ultra low power EPD pin
 
 char buffer[MAX_TEXT_LENGTH + 1];  // Buffer to store the retrieved text
 
-unsigned long previousDisplayTime = 0; 
+unsigned long previousDisplayTime = 0;
 unsigned long interval = DISPLAY_INTERVAL;  // Desired interval in seconds
 
 void setup() {
-
   display.begin();
 #if defined(FLEXIBLE_213) || defined(FLEXIBLE_290) // for flexible displays
   display.setBlackBuffer(1, false);
@@ -52,7 +53,19 @@ void loop() {
     previousDisplayTime = currentMillis;
     drawimageEPD(getRandomText(), BLACK);
   }
-  LowPower.powerDown(SLEEP_8S, ADC_OFF, BOD_OFF); // go into sleep mode for extreme power saving
+
+  set_sleep_mode(SLEEP_MODE_PWR_DOWN);  // Set sleep mode to power down
+  sleep_enable();                       // Enable sleep mode
+  noInterrupts();                       // Disable interrupts
+  wdt_reset();                          // Reset watchdog timer
+  power_all_disable();                  // Disable all power-consuming modules
+
+  // Enter sleep mode
+  sleep_mode();
+
+  // Code resumes execution here after waking up from sleep
+  sleep_disable();                      // Disable sleep mode
+  interrupts();                         // Enable interrupts
 }
 
 void drawimageEPD(const char* text, uint16_t color) {
