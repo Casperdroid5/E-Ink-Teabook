@@ -17,6 +17,6 @@ By combining the joy of tea with inspirational and humorous messages, the E-Ink-
 ### Other designs
 
 It is of course possible to use this project for other designs as well. You can think of multiple options:
-- Daily motivation "post it"
+- Daily motivation "Post-it"
 - Daily fun facts painting
 - Name tag
