@@ -15,7 +15,6 @@
 #define BLACK EPD_BLACK
 #define RED EPD_RED
 
-
 //----Display selector----//
 
 //Flexible display
@@ -26,18 +25,20 @@
 ThinkInk_213_Mono_BN display(EPD_DC, EPD_RESET, EPD_CS, SRAM_CS, EPD_BUSY);
 
 // Time interval before new text is displayed
-const unsigned long DISPLAY_INTERVAL = 30000;  // One day: 86400
+const unsigned long DISPLAY_INTERVAL = 30000;  // 30 seconds
 
 const int ENAPin = 4;  // Ultra low power EPD pin
 
 char buffer[MAX_TEXT_LENGTH + 1];  // Buffer to store the retrieved text
 
 unsigned long previousDisplayTime = 0;
-unsigned long interval = DISPLAY_INTERVAL;  // Desired interval in seconds
+unsigned long interval = DISPLAY_INTERVAL;  // Desired interval in milliseconds
+volatile int i = 0;
 
 void setup() {
   display.begin();
-#if defined(FLEXIBLE_213) || defined(FLEXIBLE_290) // for flexible displays
+  Serial.begin(9600);
+#if defined(FLEXIBLE_213) || defined(FLEXIBLE_290)  // for flexible displays
   display.setBlackBuffer(1, false);
   display.setColorBuffer(1, false);
 #endif
@@ -47,25 +48,36 @@ void setup() {
 }
 
 void loop() {
-  unsigned long currentMillis = millis();
+  
+  MCUSR = 0;  // Allow changes, disable reset
+  WDTCSR |= (1 << WDCE) | (1 << WDE);  // Set interrupt mode and an interval
+  WDTCSR = (1 << WDIE) | (1 << WDP3) | (1 << WDP0);  // Enable watchdog interrupt, 8 seconds delay
+  wdt_reset();  // Pat the dog
+    // Enter low-power sleep mode
+  set_sleep_mode(SLEEP_MODE_PWR_DOWN);
+  sleep_enable();
+  noInterrupts();
 
-  if (currentMillis - previousDisplayTime >= interval) {
-    previousDisplayTime = currentMillis;
+  // Turn off brown-out detection
+  MCUCR = bit(BODS) | bit(BODSE);
+  MCUCR = bit(BODS);
+
+  interrupts();
+  sleep_cpu();
+
+  // Execution resumes here after waking up from sleep
+  sleep_disable();
+  Serial.println("wakeup");
+  if (i > 4) {
+    Serial.println("E-ink time");
     drawimageEPD(getRandomText(), BLACK);
+    i = 0;
+
+    //digitalWrite(ENAPin, LOW);  // Disable screen
+  
   }
 
-  set_sleep_mode(SLEEP_MODE_PWR_DOWN);  // Set sleep mode to power down
-  sleep_enable();                       // Enable sleep mode
-  noInterrupts();                       // Disable interrupts
-  wdt_reset();                          // Reset watchdog timer
-  power_all_disable();                  // Disable all power-consuming modules
 
-  // Enter sleep mode
-  sleep_mode();
-
-  // Code resumes execution here after waking up from sleep
-  sleep_disable();                      // Disable sleep mode
-  interrupts();                         // Enable interrupts
 }
 
 void drawimageEPD(const char* text, uint16_t color) {
@@ -77,7 +89,7 @@ void drawimageEPD(const char* text, uint16_t color) {
   display.setTextWrap(true);
   display.print(text);
   display.display();
-  digitalWrite(ENAPin, LOW);  // Disable screen
+
 }
 
 const char* getRandomText() {
@@ -86,3 +98,11 @@ const char* getRandomText() {
   buffer[MAX_TEXT_LENGTH] = '\0';
   return buffer;
 }
+// Watchdog Timer Interrupt Service Routine
+ISR(WDT_vect) {
+  // Code to be executed when waking up from sleep mode
+  wdt_disable();  // Disable the watchdog timer
+  ++i;
+  Serial.println(i);
+}
+
