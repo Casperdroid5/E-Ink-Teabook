@@ -48,11 +48,11 @@ void setup() {
 }
 
 void loop() {
-  
-  MCUSR = 0;  // Allow changes, disable reset
-  WDTCSR |= (1 << WDCE) | (1 << WDE);  // Set interrupt mode and an interval
+
+  MCUSR = 0;                                         // Allow changes, disable reset
+  WDTCSR |= (1 << WDCE) | (1 << WDE);                // Set interrupt mode and an interval
   WDTCSR = (1 << WDIE) | (1 << WDP3) | (1 << WDP0);  // Enable watchdog interrupt, 8 seconds delay
-  wdt_reset();  // Pat the dog
+  wdt_reset();                                       // Pat the dog
     // Enter low-power sleep mode
   set_sleep_mode(SLEEP_MODE_PWR_DOWN);
   sleep_enable();
@@ -68,16 +68,13 @@ void loop() {
   // Execution resumes here after waking up from sleep
   sleep_disable();
   Serial.println("wakeup");
-  if (i > 4) {
+  if (i > 20) { // 21*8 = 168 SEC
     Serial.println("E-ink time");
     drawimageEPD(getRandomText(), BLACK);
     i = 0;
 
     //digitalWrite(ENAPin, LOW);  // Disable screen
-  
   }
-
-
 }
 
 void drawimageEPD(const char* text, uint16_t color) {
@@ -89,7 +86,6 @@ void drawimageEPD(const char* text, uint16_t color) {
   display.setTextWrap(true);
   display.print(text);
   display.display();
-
 }
 
 const char* getRandomText() {
@@ -98,11 +94,9 @@ const char* getRandomText() {
   buffer[MAX_TEXT_LENGTH] = '\0';
   return buffer;
 }
+
 // Watchdog Timer Interrupt Service Routine
 ISR(WDT_vect) {
-  // Code to be executed when waking up from sleep mode
   wdt_disable();  // Disable the watchdog timer
   ++i;
-  Serial.println(i);
 }
-
