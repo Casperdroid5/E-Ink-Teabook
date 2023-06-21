@@ -17,26 +17,25 @@
 //----Display selector----//
 
 //Flexible display
-Adafruit_IL0373 display(212, 104, EPD_DC, EPD_RESET, EPD_CS, SRAM_CS, EPD_BUSY);
-#define FLEXIBLE_213 // uncomment for flexible display size setting (required)
+//Adafruit_IL0373 display(212, 104, EPD_DC, EPD_RESET, EPD_CS, SRAM_CS, EPD_BUSY);
+//#define FLEXIBLE_213 // uncomment for flexible display size setting (required)
 
 // 2.13" Monochrome displays with 250x122 pixels and SSD1680 chipset
-//ThinkInk_213_Mono_BN display(EPD_DC, EPD_RESET, EPD_CS, SRAM_CS, EPD_BUSY);
+ThinkInk_213_Mono_BN display(EPD_DC, EPD_RESET, EPD_CS, SRAM_CS, EPD_BUSY);
 
-// Time interval before new text is displayed
-const unsigned long DISPLAY_INTERVAL = 20;  // One day: 86400
+const int TimeToWaitInSeconds = (86400 / 8);  // amount of seconds to wait devided by the 8 seconds of powerdown
 
 const int ENAPin = 4;  // Ultra low power EPD pin
 
 char buffer[MAX_TEXT_LENGTH + 1];  // Buffer to store the retrieved text
 
-unsigned long previousDisplayTime = 0; 
-unsigned long interval = DISPLAY_INTERVAL;  // Desired interval in seconds
+int counter = 0;
 
 void setup() {
+ // Serial.begin(9600);
 
   display.begin();
-#if defined(FLEXIBLE_213) || defined(FLEXIBLE_290) // for flexible displays
+#if defined(FLEXIBLE_213) || defined(FLEXIBLE_290)  // for flexible displays
   display.setBlackBuffer(1, false);
   display.setColorBuffer(1, false);
 #endif
@@ -46,17 +45,21 @@ void setup() {
 }
 
 void loop() {
-  unsigned long currentMillis = millis();
-
-  if (currentMillis - previousDisplayTime >= interval) {
-    previousDisplayTime = currentMillis;
+  if (counter >= TimeToWaitInSeconds) {
+    delay(10);
+    digitalWrite(ENAPin, HIGH);  // Enable screen
+    delay(50);
     drawimageEPD(getRandomText(), BLACK);
+    delay(10);
+    digitalWrite(ENAPin, LOW);  // Disable screen
+    counter = 0;
   }
-  LowPower.powerDown(SLEEP_8S, ADC_OFF, BOD_OFF); // go into sleep mode for extreme power saving
+  LowPower.powerDown(SLEEP_8S, ADC_OFF, BOD_OFF);  // go into sleep mode for extreme power saving
+  counter = counter + 1;
 }
 
 void drawimageEPD(const char* text, uint16_t color) {
-  digitalWrite(ENAPin, HIGH);  // Enable screen
+  display.begin();
   display.clearBuffer();
   display.setCursor(0, 0);
   display.setTextSize(2);
@@ -64,12 +67,12 @@ void drawimageEPD(const char* text, uint16_t color) {
   display.setTextWrap(true);
   display.print(text);
   display.display();
-  digitalWrite(ENAPin, LOW);  // Disable screen
 }
 
 const char* getRandomText() {
   int randomIndex = random(0, TEXT_COUNT);
   strncpy_P(buffer, (char*)pgm_read_word(&(Texts[randomIndex])), MAX_TEXT_LENGTH);
   buffer[MAX_TEXT_LENGTH] = '\0';
+  //Serial.println(buffer);
   return buffer;
 }
