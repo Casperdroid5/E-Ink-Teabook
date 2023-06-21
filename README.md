@@ -6,7 +6,7 @@ A Teabook with a built-in E-ink display that displays self-help, compliments, an
 
 The E-Ink-Teabook is designed to be compatible with the following hardware components:
 
-- Arduino Pro Mini 3.3V 8MHz: It is recommended to remove the power LED for safety. Optionally, the voltage regulator can be removed, although it is less secure than leaving it intact.
+- Arduino Pro Mini 3.3V 8MHz: It is recommended to remove the power LED for energy preservation. Optionally, the voltage regulator can be removed, although it is less secure than leaving it intact.
 
 - Power Source: The system can be powered by 2 AA batteries. However, for optimal performance and system stability, it is highly recommended to use a 4.5V power source such as 3 AA or 3 AAA batteries. Using lower voltage power sources may result in system instability, with the system failing at around 2.7V. The device is very low power with around 31uA current usage when "sleeping". This is thanks to the hardware design of Adafruit and my software optimization.
 
