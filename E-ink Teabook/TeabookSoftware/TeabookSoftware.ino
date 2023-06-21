@@ -1,8 +1,6 @@
 #include "Adafruit_ThinkInk.h"
 #include "Texts.h"
-#include <avr/sleep.h>
-#include <avr/wdt.h>
-#include <avr/power.h>
+#include <LowPower.h>
 
 // Pin definitions
 #define EPD_CS 10
@@ -15,30 +13,30 @@
 #define BLACK EPD_BLACK
 #define RED EPD_RED
 
+
 //----Display selector----//
 
 //Flexible display
-//Adafruit_IL0373 display(212, 104, EPD_DC, EPD_RESET, EPD_CS, SRAM_CS, EPD_BUSY);
-//#define FLEXIBLE_213 // uncomment for flexible display size setting (required)
+Adafruit_IL0373 display(212, 104, EPD_DC, EPD_RESET, EPD_CS, SRAM_CS, EPD_BUSY);
+#define FLEXIBLE_213 // uncomment for flexible display size setting (required)
 
 // 2.13" Monochrome displays with 250x122 pixels and SSD1680 chipset
-ThinkInk_213_Mono_BN display(EPD_DC, EPD_RESET, EPD_CS, SRAM_CS, EPD_BUSY);
+//ThinkInk_213_Mono_BN display(EPD_DC, EPD_RESET, EPD_CS, SRAM_CS, EPD_BUSY);
 
 // Time interval before new text is displayed
-const unsigned long DISPLAY_INTERVAL = 30000;  // 30 seconds
+const unsigned long DISPLAY_INTERVAL = 20;  // One day: 86400
 
 const int ENAPin = 4;  // Ultra low power EPD pin
 
 char buffer[MAX_TEXT_LENGTH + 1];  // Buffer to store the retrieved text
 
-unsigned long previousDisplayTime = 0;
-unsigned long interval = DISPLAY_INTERVAL;  // Desired interval in milliseconds
-volatile int i = 0;
+unsigned long previousDisplayTime = 0; 
+unsigned long interval = DISPLAY_INTERVAL;  // Desired interval in seconds
 
 void setup() {
+
   display.begin();
-  Serial.begin(9600);
-#if defined(FLEXIBLE_213) || defined(FLEXIBLE_290)  // for flexible displays
+#if defined(FLEXIBLE_213) || defined(FLEXIBLE_290) // for flexible displays
   display.setBlackBuffer(1, false);
   display.setColorBuffer(1, false);
 #endif
@@ -48,33 +46,13 @@ void setup() {
 }
 
 void loop() {
+  unsigned long currentMillis = millis();
 
-  MCUSR = 0;                                         // Allow changes, disable reset
-  WDTCSR |= (1 << WDCE) | (1 << WDE);                // Set interrupt mode and an interval
-  WDTCSR = (1 << WDIE) | (1 << WDP3) | (1 << WDP0);  // Enable watchdog interrupt, 8 seconds delay
-  wdt_reset();                                       // Pat the dog
-    // Enter low-power sleep mode
-  set_sleep_mode(SLEEP_MODE_PWR_DOWN);
-  sleep_enable();
-  noInterrupts();
-
-  // Turn off brown-out detection
-  MCUCR = bit(BODS) | bit(BODSE);
-  MCUCR = bit(BODS);
-
-  interrupts();
-  sleep_cpu();
-
-  // Execution resumes here after waking up from sleep
-  sleep_disable();
-  Serial.println("wakeup");
-  if (i > 20) { // 21*8 = 168 SEC
-    Serial.println("E-ink time");
+  if (currentMillis - previousDisplayTime >= interval) {
+    previousDisplayTime = currentMillis;
     drawimageEPD(getRandomText(), BLACK);
-    i = 0;
-
-    //digitalWrite(ENAPin, LOW);  // Disable screen
   }
+  LowPower.powerDown(SLEEP_8S, ADC_OFF, BOD_OFF); // go into sleep mode for extreme power saving
 }
 
 void drawimageEPD(const char* text, uint16_t color) {
@@ -86,6 +64,7 @@ void drawimageEPD(const char* text, uint16_t color) {
   display.setTextWrap(true);
   display.print(text);
   display.display();
+  digitalWrite(ENAPin, LOW);  // Disable screen
 }
 
 const char* getRandomText() {
@@ -93,10 +72,4 @@ const char* getRandomText() {
   strncpy_P(buffer, (char*)pgm_read_word(&(Texts[randomIndex])), MAX_TEXT_LENGTH);
   buffer[MAX_TEXT_LENGTH] = '\0';
   return buffer;
-}
-
-// Watchdog Timer Interrupt Service Routine
-ISR(WDT_vect) {
-  wdt_disable();  // Disable the watchdog timer
-  ++i;
 }
