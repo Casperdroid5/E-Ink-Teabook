@@ -23,7 +23,7 @@
 // 2.13" Monochrome displays with 250x122 pixels and SSD1680 chipset
 ThinkInk_213_Mono_BN display(EPD_DC, EPD_RESET, EPD_CS, SRAM_CS, EPD_BUSY);
 
-const int TimeToWaitInSeconds = (86400 / 8);  // amount of seconds to wait devided by the 8 seconds of powerdown
+const int TimeToWaitInSeconds = (86400 / 8);  // amount of seconds to wait devided by the 8 seconds of powerdown. 86400 seconds = a day
 
 const int ENAPin = 4;  // Ultra low power EPD pin
 
@@ -32,7 +32,6 @@ char buffer[MAX_TEXT_LENGTH + 1];  // Buffer to store the retrieved text
 int counter = 0;
 
 void setup() {
- // Serial.begin(9600);
 
   display.begin();
 #if defined(FLEXIBLE_213) || defined(FLEXIBLE_290)  // for flexible displays
@@ -73,6 +72,5 @@ const char* getRandomText() {
   int randomIndex = random(0, TEXT_COUNT);
   strncpy_P(buffer, (char*)pgm_read_word(&(Texts[randomIndex])), MAX_TEXT_LENGTH);
   buffer[MAX_TEXT_LENGTH] = '\0';
-  //Serial.println(buffer);
   return buffer;
 }
