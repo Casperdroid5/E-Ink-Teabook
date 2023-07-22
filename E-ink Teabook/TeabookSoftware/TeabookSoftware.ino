@@ -39,7 +39,9 @@ void setup() {
   display.setBlackBuffer(1, false);
   display.setColorBuffer(1, false);
 #endif
-  drawimageEPD(getNextText(), BLACK);
+  drawimageEPD("Selfhelp Teabook\nby:\nCasper\n\nMade with love for:\nAlys" , BLACK);
+  delay(3000);
+  drawimageEPD("\nAfter all this time\nyou will find \nthat you were \nalready perfect\n\n  from the start" , BLACK);
   pinMode(EPD_RESET, OUTPUT);
   pinMode(ENAPin, OUTPUT);
 }
@@ -70,7 +72,6 @@ void drawimageEPD(const char* text, uint16_t color) {
 }
 
 const char* getNextText() {
-
   strncpy_P(buffer, (char*)pgm_read_word(&(Texts[currentIndex])), MAX_TEXT_LENGTH);
   buffer[MAX_TEXT_LENGTH] = '\0';
   currentIndex = (currentIndex + 1) % TEXT_COUNT;
