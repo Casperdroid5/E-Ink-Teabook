@@ -24,6 +24,7 @@
 ThinkInk_213_Mono_BN display(EPD_DC, EPD_RESET, EPD_CS, SRAM_CS, EPD_BUSY);
 
 const int TimeToWaitInSeconds = (86400 / 8);  // amount of seconds to wait devided by the 8 seconds of powerdown. 86400 seconds = a day
+int currentIndex = 0;                         // Variable to keep track of the current text index
 
 const int ENAPin = 4;  // Ultra low power EPD pin
 
@@ -38,7 +39,7 @@ void setup() {
   display.setBlackBuffer(1, false);
   display.setColorBuffer(1, false);
 #endif
-  drawimageEPD(getRandomText(), BLACK);
+  drawimageEPD(getNextText(), BLACK);
   pinMode(EPD_RESET, OUTPUT);
   pinMode(ENAPin, OUTPUT);
 }
@@ -48,7 +49,7 @@ void loop() {
     delay(10);
     digitalWrite(ENAPin, HIGH);  // Enable screen
     delay(50);
-    drawimageEPD(getRandomText(), BLACK);
+    drawimageEPD(getNextText(), BLACK);
     delay(10);
     digitalWrite(ENAPin, LOW);  // Disable screen
     counter = 0;
@@ -68,9 +69,10 @@ void drawimageEPD(const char* text, uint16_t color) {
   display.display();
 }
 
-const char* getRandomText() {
-  int randomIndex = random(0, TEXT_COUNT);
-  strncpy_P(buffer, (char*)pgm_read_word(&(Texts[randomIndex])), MAX_TEXT_LENGTH);
+const char* getNextText() {
+
+  strncpy_P(buffer, (char*)pgm_read_word(&(Texts[currentIndex])), MAX_TEXT_LENGTH);
   buffer[MAX_TEXT_LENGTH] = '\0';
+  currentIndex = (currentIndex + 1) % TEXT_COUNT;
   return buffer;
 }
