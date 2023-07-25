@@ -24,7 +24,7 @@
 ThinkInk_213_Mono_BN display(EPD_DC, EPD_RESET, EPD_CS, SRAM_CS, EPD_BUSY);
 
 const int TimeToWaitInSeconds = (86400 / 8);  // amount of seconds to wait devided by the 8 seconds of powerdown. 86400 seconds = a day
-int currentIndex = 0;                         // Variable to keep track of the current text index
+int currentIndex = 0;                     // Variable to keep track of the current text index
 
 const int ENAPin = 4;  // Ultra low power EPD pin
 
