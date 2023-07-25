@@ -41,7 +41,7 @@ void setup() {
 #endif
   drawimageEPD("Selfhelp Teabook\nby:\nCasper\n\nMade with love for:\nAlys" , BLACK);
   delay(3000);
-  drawimageEPD("\nAfter all this time\nyou will find \nthat you were \nalready perfect\n\n  from the start" , BLACK);
+  drawimageEPD("\nAfter all this time\nyou will find Alys,\nthat you were \nalready perfect\n\n  from the start" , BLACK);
   pinMode(EPD_RESET, OUTPUT);
   pinMode(ENAPin, OUTPUT);
 }
